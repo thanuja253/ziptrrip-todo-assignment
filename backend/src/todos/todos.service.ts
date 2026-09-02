@@ -77,7 +77,7 @@ export class TodosService implements OnModuleInit {
       .exec();
 
     if (!updated) {
-      throw new NotFoundException('Todo disappeared before the write landed.');
+      throw new NotFoundException('Todo was deleted before the update finished.');
     }
 
     return toTodoView(updated as unknown as TodoRecord);
@@ -133,43 +133,41 @@ function escapeRegex(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-// Empty collections get a handful of travel-shaped rows so the UI isn't
-// a blank page the first time someone boots the stack.
+// First boot with an empty collection gets a few rows so the list isn't blank.
 const STARTERS: Array<Record<string, unknown>> = [
   {
-    title: 'Hold the Lisbon apartment deposit',
+    title: 'Send Rohan the March numbers',
     description:
-      'Host wants the remainder by Friday. Receipt is in the travel thread, not the bank app.',
+      'He asked again this morning. Spreadsheet is in Shared/Finance, tab 3.',
     completed: false,
     priority: TodoPriority.HIGH,
-    tags: ['lisbon', 'money'],
+    tags: ['work'],
     dueAt: daysFromNow(2),
   },
   {
-    title: 'Renew passport photos',
+    title: 'Login times out on staging',
     description:
-      'Need a 35×45 set. Chemist on Rue Cler does them while you wait.',
+      'Leave the tab idle for about 20 minutes, then hit Save. Chrome only, Safari is fine.',
     completed: false,
     priority: TodoPriority.MEDIUM,
-    tags: ['docs'],
-    dueAt: daysFromNow(9),
+    tags: ['work', 'bug'],
+    dueAt: daysFromNow(5),
   },
   {
-    title: 'Ask Marta about the Sintra train times',
-    description:
-      'Last I checked they change after 18:00. Confirm before we book the palace slot.',
+    title: 'Call landlord about the kitchen tap',
+    description: 'Slow leak under the sink. Valve is already off.',
+    completed: false,
+    priority: TodoPriority.HIGH,
+    tags: ['home'],
+    dueAt: daysFromNow(1),
+  },
+  {
+    title: 'Order printer paper',
+    description: '',
     completed: true,
     priority: TodoPriority.LOW,
-    tags: ['sintra'],
+    tags: ['office'],
     dueAt: null,
-  },
-  {
-    title: 'Pack the yellow rain jacket',
-    description: '',
-    completed: false,
-    priority: TodoPriority.LOW,
-    tags: ['packing'],
-    dueAt: daysFromNow(14),
   },
 ];
 

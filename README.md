@@ -1,50 +1,54 @@
 # Ziptrrip Todo
 
-A two-page todo app for the Ziptrrip assignment.
+Todo app for the Ziptrrip assignment. React + TypeScript on the front, NestJS API, MongoDB.
 
-The frontend is a real multi-page app: `index.html` is the list, `todo.html` is a single ticket. Clicking a title does a full navigation to `/todo.html?id=…`. There is no React Router and no shared client-side history.
+There are two pages:
 
-The API is NestJS. Todos live in MongoDB.
+- list — `http://localhost:5173/`
+- one todo — `http://localhost:5173/todo.html?id=<id>`
 
-## Stack
+`id` is a query param, not part of the path. Clicking a title loads `todo.html` as a new page. I didn't put React Router in here on purpose.
 
-| Layer | Choice |
-| --- | --- |
-| Web | React 19, TypeScript, Vite (two HTML entry points) |
-| API | NestJS 11, TypeScript |
-| Data | MongoDB via Mongoose |
-| Tests | Jest + Supertest |
-| API scratch files | Postman collection + `api/todos.http` |
+Full feature list is in [FEATURES.md](FEATURES.md). API shapes are in [docs/API.md](docs/API.md). Folder layout and why the two HTML files exist is in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
-## Pages
+## What you need
 
-- List: [http://localhost:5173/](http://localhost:5173/)
-- Ticket: [http://localhost:5173/todo.html?id=\<mongoObjectId\>](http://localhost:5173/todo.html?id=)
+- Node 20
+- Mongo on `27017`
 
-The query parameter name is `id`, as the brief asked for.
-
-## Run it
-
-Mongo needs to be up first. Either:
+If Mongo isn't already running:
 
 ```bash
 docker compose up -d
 ```
 
-or a local `mongod` already listening on `27017` (Homebrew install is fine).
+Homebrew `mongod` on the default port is also fine. I used that locally.
 
-API:
+## Run the API first
+
+The UI calls `http://localhost:3000/api`. If this isn't up, the list page will error.
 
 ```bash
 cd backend
-cp .env.example .env   # already matches local Docker
+cp .env.example .env
 npm install
 npm run start:dev
 ```
 
-Listens on `http://localhost:3000`. Global prefix is `/api`.
+Leave that terminal open. First boot against an empty database inserts a few sample todos.
 
-Web:
+`.env` is just:
+
+```
+MONGODB_URI=mongodb://127.0.0.1:27017/ziptrrip
+PORT=3000
+```
+
+Don't commit real Atlas passwords.
+
+## Then run the UI
+
+The `frontend` folder is the React app. You don't need to know Vite for this — `npm run dev` starts a local site and prints a URL. Open that. It's usually `http://localhost:5173`.
 
 ```bash
 cd frontend
@@ -53,43 +57,36 @@ npm install
 npm run dev
 ```
 
-Vite serves on `http://localhost:5173`.
-
-An empty database gets four sample tickets on first boot so the list is not a blank page.
-
-## Tests
-
-```bash
-cd backend
-npm test
-npm run test:e2e
-```
-
-Unit tests sit next to the service and controller. The e2e file hits the HTTP layer with the service mocked — it checks validation and status codes without needing Mongo.
-
-## Docs in this repo
-
-- [FEATURES.md](FEATURES.md) — what the product actually does
-- [docs/API.md](docs/API.md) — request/response contract
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — MPA setup, folders, why these choices
-- [postman/Ziptrrip-Todo-API.postman_collection.json](postman/Ziptrrip-Todo-API.postman_collection.json)
-- [api/todos.http](api/todos.http) — VS Code REST Client
-
-Undocumented behaviour is not part of the submission. If it is not in FEATURES.md, treat it as accidental.
-
-## Env
-
-`backend/.env.example`
-
-```
-MONGODB_URI=mongodb://127.0.0.1:27017/ziptrrip
-PORT=3000
-```
-
-`frontend/.env.example`
+`frontend/.env` tells the React app where the API is:
 
 ```
 VITE_API_URL=http://localhost:3000/api
 ```
 
-Do not put Atlas passwords in git.
+Leave it unless you changed the API port. The `VITE_` prefix is required by the frontend tooling; if you rename the variable, the app won't pick it up.
+
+## Quick check
+
+1. List page loads sample todos.
+2. Add one from the form at the top.
+3. Tick the checkbox — it should go to done.
+4. Click a title — URL becomes `/todo.html?id=...` and you get the full record.
+5. Edit, save, go back. Delete uses an in-app confirm, not the browser popup.
+
+## Tests
+
+From `backend/`:
+
+```bash
+npm test
+npm run test:e2e
+```
+
+`npm test` is the service/controller unit tests. `test:e2e` hits the HTTP routes with the service mocked, so Mongo isn't required for that.
+
+## Calling the API directly
+
+- Postman: `postman/Ziptrrip-Todo-API.postman_collection.json`
+- VS Code REST Client: `api/todos.http`
+
+Same CRUD as the UI: create, list, get one, patch, delete.

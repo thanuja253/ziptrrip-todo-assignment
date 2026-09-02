@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { ApiError, createTodo, deleteTodo, listTodos, updateTodo } from '../../shared/api'
-import { formatShort, fromDateInput, isOverdue, parseTags } from '../../shared/format'
+import { formatShort, fromDateInput, isOverdue, labelPriority, parseTags } from '../../shared/format'
+import { ConfirmDialog } from '../../shared/ConfirmDialog'
 import { Shell } from '../../shared/Shell'
 import type { StatusFilter, Todo, TodoPriority } from '../../shared/types'
 import { useDebounced } from '../../shared/useDebounced'
@@ -21,6 +22,8 @@ export function ListPage() {
   const [due, setDue] = useState('')
   const [tags, setTags] = useState('')
   const [saving, setSaving] = useState(false)
+  const [pending, setPending] = useState<Todo | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
   const qDebounced = useDebounced(q)
 
@@ -35,7 +38,7 @@ export function ListPage() {
       })
       .catch((err: unknown) => {
         if (cancelled) return
-        setError(err instanceof ApiError ? err.message : 'Something went sideways.')
+        setError(err instanceof ApiError ? err.message : 'Could not load todos.')
       })
       .finally(() => {
         if (!cancelled) setLoading(false)
@@ -75,7 +78,7 @@ export function ListPage() {
       const rows = await listTodos({ q: qDebounced, status, priority })
       setTodos(rows)
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not add that.')
+      setError(err instanceof ApiError ? err.message : 'Could not add todo.')
     } finally {
       setSaving(false)
     }
@@ -88,35 +91,39 @@ export function ListPage() {
       await updateTodo(todo.id, { completed: next })
     } catch (err) {
       setTodos((rows) => rows.map((r) => (r.id === todo.id ? todo : r)))
-      setError(err instanceof ApiError ? err.message : 'Could not update.')
+      setError(err instanceof ApiError ? err.message : 'Could not update todo.')
     }
   }
 
-  async function remove(todo: Todo) {
-    if (!window.confirm(`Drop “${todo.title}”? This does not come back.`)) return
+  async function confirmRemove() {
+    if (!pending) return
     const snapshot = todos
-    setTodos((rows) => rows.filter((r) => r.id !== todo.id))
+    const target = pending
+    setTodos((rows) => rows.filter((r) => r.id !== target.id))
+    setDeleting(true)
     try {
-      await deleteTodo(todo.id)
+      await deleteTodo(target.id)
+      setPending(null)
     } catch (err) {
       setTodos(snapshot)
-      setError(err instanceof ApiError ? err.message : 'Could not delete.')
+      setError(err instanceof ApiError ? err.message : 'Could not delete todo.')
+    } finally {
+      setDeleting(false)
     }
   }
 
   return (
-    <Shell kicker="the list">
+    <Shell kicker="Todos">
       <main className="sheet">
-        <h1 className="page-title">What still needs doing.</h1>
+        <h1 className="page-title">Todos</h1>
         <p className="lede">
-          Slip a task onto the blotter, tick it when it is done, or open the
-          ticket for the long version. Each ticket is its own page.
+          Add a task, check it off, or open it to edit the details.
         </p>
 
         <form className="composer" onSubmit={onCreate}>
           <input
             type="text"
-            placeholder="Add a slip — e.g. Confirm the Sintra tickets"
+            placeholder="What needs doing?"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={180}
@@ -124,7 +131,7 @@ export function ListPage() {
             aria-label="Title"
           />
           <textarea
-            placeholder="A note, if it needs one"
+            placeholder="Description (optional)"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             maxLength={2000}
@@ -132,7 +139,7 @@ export function ListPage() {
           />
           <div className="row-fields">
             <div className="field priority-select">
-              <label htmlFor="priority">Weight</label>
+              <label htmlFor="priority">Priority</label>
               <select
                 id="priority"
                 value={draftPriority}
@@ -140,13 +147,13 @@ export function ListPage() {
               >
                 {PRIORITIES.map((p) => (
                   <option key={p} value={p}>
-                    {p}
+                    {labelPriority(p)}
                   </option>
                 ))}
               </select>
             </div>
             <div className="field">
-              <label htmlFor="due">Due</label>
+              <label htmlFor="due">Due date</label>
               <input
                 id="due"
                 type="date"
@@ -159,7 +166,7 @@ export function ListPage() {
               <input
                 id="tags"
                 type="text"
-                placeholder="lisbon, packing"
+                placeholder="work, home"
                 value={tags}
                 onChange={(e) => setTags(e.target.value)}
               />
@@ -174,7 +181,7 @@ export function ListPage() {
           <div className="search">
             <input
               type="text"
-              placeholder="Search titles, notes, tags"
+              placeholder="Search"
               value={q}
               onChange={(e) => setQ(e.target.value)}
               aria-label="Search"
@@ -189,7 +196,7 @@ export function ListPage() {
                 aria-pressed={status === s}
                 onClick={() => setStatus(s)}
               >
-                {s}
+                {s === 'all' ? 'All' : s === 'open' ? 'Open' : 'Done'}
               </button>
             ))}
           </div>
@@ -200,7 +207,7 @@ export function ListPage() {
               aria-pressed={priority === ''}
               onClick={() => setPriority('')}
             >
-              any weight
+              All priorities
             </button>
             {PRIORITIES.map((p) => (
               <button
@@ -210,7 +217,7 @@ export function ListPage() {
                 aria-pressed={priority === p}
                 onClick={() => setPriority(p)}
               >
-                {p}
+                {labelPriority(p)}
               </button>
             ))}
           </div>
@@ -228,9 +235,9 @@ export function ListPage() {
         ) : todos.length === 0 ? (
           <div className="empty">
             <p>
-              <em>Nothing on the blotter.</em>
+              <em>No todos yet.</em>
               <br />
-              Add something above, or loosen the filters.
+              Add one above, or clear the filters.
             </p>
           </div>
         ) : (
@@ -250,7 +257,7 @@ export function ListPage() {
                     {todo.title}
                   </a>
                   <div className="meta">
-                    <span>{todo.priority}</span>
+                    <span>{labelPriority(todo.priority)}</span>
                     {todo.dueAt ? (
                       <span className={`due${isOverdue(todo) ? ' late' : ''}`}>
                         {isOverdue(todo) ? 'overdue ' : 'due '}
@@ -265,8 +272,8 @@ export function ListPage() {
                   </div>
                 </div>
                 <div className="side">
-                  <button type="button" className="icon-btn" onClick={() => void remove(todo)}>
-                    Drop
+                  <button type="button" className="icon-btn" onClick={() => setPending(todo)}>
+                    Delete
                   </button>
                 </div>
               </li>
@@ -274,6 +281,17 @@ export function ListPage() {
           </ul>
         )}
       </main>
+      {pending ? (
+        <ConfirmDialog
+          title="Delete this todo?"
+          body={`“${pending.title}” will be removed. This cannot be undone.`}
+          busy={deleting}
+          onCancel={() => {
+            if (!deleting) setPending(null)
+          }}
+          onConfirm={() => void confirmRemove()}
+        />
+      ) : null}
     </Shell>
   )
 }

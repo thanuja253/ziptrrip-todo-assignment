@@ -51,7 +51,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       },
     })
   } catch {
-    throw new ApiError(0, 'Cannot reach the API. Is the Nest server running on :3000?')
+    throw new ApiError(0, 'Cannot reach the API. Is the server running on port 3000?')
   }
 
   if (res.status === 204) return undefined as T

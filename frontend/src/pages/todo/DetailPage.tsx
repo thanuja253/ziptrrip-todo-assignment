@@ -3,9 +3,11 @@ import { ApiError, deleteTodo, getTodo, updateTodo } from '../../shared/api'
 import {
   formatLong,
   fromDateInput,
+  labelPriority,
   parseTags,
   toDateInput,
 } from '../../shared/format'
+import { ConfirmDialog } from '../../shared/ConfirmDialog'
 import { Shell } from '../../shared/Shell'
 import type { Todo, TodoPriority } from '../../shared/types'
 
@@ -26,12 +28,15 @@ export function DetailPage() {
   const [tags, setTags] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [pendingDelete, setPendingDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     if (!id) {
       setLoading(false)
-      setError('This page expects ?id= on the query string.')
+      setError('No todo id in the URL.')
       return
     }
 
@@ -42,7 +47,7 @@ export function DetailPage() {
       })
       .catch((err: unknown) => {
         if (err instanceof ApiError && err.status === 404) {
-          setError('That ticket is not in the drawer.')
+          setError('This todo does not exist.')
         } else {
           setError(err instanceof ApiError ? err.message : 'Could not load this todo.')
         }
@@ -57,14 +62,6 @@ export function DetailPage() {
     setDue(toDateInput(row.dueAt))
     setTags(row.tags.join(', '))
   }
-
-  const dirty =
-    !!todo &&
-    (title !== todo.title ||
-      description !== todo.description ||
-      priority !== todo.priority ||
-      toDateInput(todo.dueAt) !== due ||
-      todo.tags.join(', ') !== tags)
 
   async function onSave(e: FormEvent) {
     e.preventDefault()
@@ -81,6 +78,8 @@ export function DetailPage() {
       })
       setTodo(next)
       fill(next)
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 1600)
     } catch (err) {
       setError(err instanceof ApiError ? err.message : 'Save failed.')
     } finally {
@@ -98,22 +97,24 @@ export function DetailPage() {
     }
   }
 
-  async function remove() {
+  async function confirmRemove() {
     if (!id || !todo) return
-    if (!window.confirm(`Drop “${todo.title}”?`)) return
+    setDeleting(true)
     try {
       await deleteTodo(id)
       window.location.href = '/'
     } catch (err) {
+      setDeleting(false)
+      setPendingDelete(false)
       setError(err instanceof ApiError ? err.message : 'Could not delete.')
     }
   }
 
   return (
-    <Shell kicker="one ticket">
+    <Shell kicker="Details">
       <main className="sheet">
         <a className="back" href="/">
-          ← the list
+          ← Todos
         </a>
 
         {loading ? (
@@ -130,7 +131,7 @@ export function DetailPage() {
             <div className="detail-head">
               <h1 className="page-title">{todo.title}</h1>
               <span className={`badge${todo.completed ? '' : ' open'}`}>
-                {todo.completed ? 'done' : 'open'}
+                {todo.completed ? 'Done' : 'Open'}
               </span>
             </div>
 
@@ -147,7 +148,7 @@ export function DetailPage() {
                 />
               </div>
               <div className="field">
-                <label htmlFor="body">Note</label>
+                <label htmlFor="body">Description</label>
                 <textarea
                   id="body"
                   value={description}
@@ -157,7 +158,7 @@ export function DetailPage() {
               </div>
               <div className="row-fields">
                 <div className="field">
-                  <label htmlFor="priority">Weight</label>
+                  <label htmlFor="priority">Priority</label>
                   <select
                     id="priority"
                     value={priority}
@@ -165,13 +166,13 @@ export function DetailPage() {
                   >
                     {PRIORITIES.map((p) => (
                       <option key={p} value={p}>
-                        {p}
+                        {labelPriority(p)}
                       </option>
                     ))}
                   </select>
                 </div>
                 <div className="field">
-                  <label htmlFor="due">Due</label>
+                  <label htmlFor="due">Due date</label>
                   <input
                     id="due"
                     type="date"
@@ -186,37 +187,48 @@ export function DetailPage() {
                     type="text"
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
-                    placeholder="comma separated"
+                    placeholder="work, home"
                   />
                 </div>
               </div>
 
               <div className="actions">
-                <button className="btn" type="submit" disabled={saving || !dirty || !title.trim()}>
-                  {saving ? 'Saving…' : 'Save'}
+                <button className="btn" type="submit" disabled={saving || !title.trim()}>
+                  {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
                 </button>
                 <button className="btn ghost" type="button" onClick={() => void toggle()}>
                   {todo.completed ? 'Reopen' : 'Mark done'}
                 </button>
-                <button className="btn danger" type="button" onClick={() => void remove()}>
-                  Drop ticket
+                <button className="btn danger" type="button" onClick={() => setPendingDelete(true)}>
+                  Delete
                 </button>
               </div>
             </form>
 
             <div className="stamp">
               <div>
-                <b>Opened</b>
+                <b>Created</b>
                 {formatLong(todo.createdAt)}
               </div>
               <div>
-                <b>Last ink</b>
+                <b>Updated</b>
                 {formatLong(todo.updatedAt)}
               </div>
             </div>
           </>
         ) : null}
       </main>
+      {pendingDelete && todo ? (
+        <ConfirmDialog
+          title="Delete this todo?"
+          body={`“${todo.title}” will be removed. This cannot be undone.`}
+          busy={deleting}
+          onCancel={() => {
+            if (!deleting) setPendingDelete(false)
+          }}
+          onConfirm={() => void confirmRemove()}
+        />
+      ) : null}
     </Shell>
   )
 }

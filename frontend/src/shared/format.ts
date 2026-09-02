@@ -1,4 +1,4 @@
-import type { Todo } from './types'
+import type { Todo, TodoPriority } from './types'
 
 const short = new Intl.DateTimeFormat('en-GB', {
   day: 'numeric',
@@ -47,4 +47,10 @@ export function parseTags(raw: string): string[] {
     .split(',')
     .map((t) => t.trim())
     .filter(Boolean)
+}
+
+export function labelPriority(p: TodoPriority): string {
+  if (p === 'high') return 'High'
+  if (p === 'low') return 'Low'
+  return 'Medium'
 }

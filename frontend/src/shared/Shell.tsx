@@ -15,9 +15,6 @@ export function Shell({ kicker, children }: Props) {
         <p className="kicker">{kicker}</p>
       </header>
       {children}
-      <footer className="colophon">
-        Two pages. Two HTML documents. Not a client-side router.
-      </footer>
     </div>
   )
 }

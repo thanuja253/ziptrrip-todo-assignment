@@ -1,18 +1,19 @@
 :root {
-  --blotter: #b59a78;
-  --sheet: #f4e6d0;
-  --sheet-raised: #faf0de;
-  --ink: #1e1610;
-  --faded: #6d5c4c;
-  --rule: #d7c4a8;
-  --ember: #b13218;
-  --ember-deep: #8a2410;
-  --pine: #2c4538;
-  --brass: #8a6432;
-  --saffron: #c48628;
-  --wine: #7a2834;
-  --mist: rgba(30, 22, 16, 0.07);
-  --shadow: 0 18px 40px -24px rgba(48, 28, 12, 0.45);
+  --blotter: #d8d3ca;
+  --sheet: #fbfaf7;
+  --sheet-raised: #ffffff;
+  --ink: #1c1f1d;
+  --faded: #5c635e;
+  --rule: #e2ddd4;
+  --ember: #e24422;
+  --ember-deep: #b1381c;
+  --pine: #2d6a5a;
+  --brass: #6a6660;
+  --saffron: #d8901c;
+  --wine: #c43a3a;
+  --mist: rgba(28, 31, 29, 0.05);
+  --shadow: 0 22px 50px -28px rgba(40, 36, 28, 0.35);
+  --btn-ink: #fff7f2;
 
   --serif: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Palatino, serif;
   --sans: 'Figtree', 'Avenir Next', 'Segoe UI', sans-serif;
@@ -34,20 +35,10 @@ body {
   font-family: var(--sans);
   color: var(--ink);
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(255, 236, 210, 0.45), transparent 55%),
-    radial-gradient(900px 500px at 110% 10%, rgba(140, 70, 40, 0.16), transparent 50%),
+    radial-gradient(900px 520px at 8% -8%, rgba(210, 74, 40, 0.08), transparent 50%),
+    radial-gradient(800px 480px at 100% 0%, rgba(45, 106, 90, 0.1), transparent 48%),
     var(--blotter);
   background-attachment: fixed;
-}
-
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.22;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2  0 0 0 0 0.14  0 0 0 0 0.1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
 
 #root {
@@ -99,7 +90,7 @@ a {
 
 .sheet {
   background: var(--sheet);
-  border: 1px solid rgba(30, 22, 16, 0.12);
+  border: 1px solid rgba(28, 31, 29, 0.08);
   box-shadow: var(--shadow);
   padding: 28px 28px 22px;
 }
@@ -187,7 +178,7 @@ a {
   appearance: none;
   border: 0;
   background: var(--ember);
-  color: #f8ead8;
+  color: var(--btn-ink);
   padding: 11px 16px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -202,7 +193,9 @@ a {
 }
 
 .btn:disabled {
-  opacity: 0.45;
+  background: #c8c4bc;
+  color: #f7f6f3;
+  opacity: 1;
   cursor: not-allowed;
 }
 
@@ -216,10 +209,55 @@ a {
   background: var(--mist);
 }
 
-.btn.danger {
-  background: transparent;
-  color: var(--wine);
-  border: 1px solid color-mix(in srgb, var(--wine) 35%, var(--rule));
+.btn.danger:hover {
+  background: color-mix(in srgb, var(--wine) 8%, var(--sheet));
+}
+
+.btn.danger-fill {
+  background: var(--wine);
+  color: #fff8f6;
+  border: 0;
+}
+
+.btn.danger-fill:hover {
+  background: color-mix(in srgb, var(--wine) 88%, #000);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  background: rgba(28, 31, 29, 0.38);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.dialog {
+  width: min(420px, 100%);
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  box-shadow: var(--shadow);
+  padding: 22px 22px 18px;
+}
+
+.dialog h2 {
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  margin: 0 0 8px;
+  font-weight: 600;
+}
+
+.dialog p {
+  margin: 0 0 18px;
+  color: var(--faded);
+  line-height: 1.45;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .toolbar {
@@ -286,7 +324,7 @@ a {
   display: grid;
   grid-template-columns: 8px 34px 1fr auto;
   background: var(--sheet-raised);
-  border: 1px solid rgba(30, 22, 16, 0.08);
+  border: 1px solid var(--rule);
   min-height: 64px;
 }
 
@@ -335,8 +373,8 @@ a {
   content: '';
   width: 8px;
   height: 4px;
-  border-left: 2px solid #f4e6d0;
-  border-bottom: 2px solid #f4e6d0;
+  border-left: 2px solid var(--sheet);
+  border-bottom: 2px solid var(--sheet);
   transform: rotate(-45deg) translate(0, -1px);
 }
 
@@ -422,13 +460,6 @@ a {
   height: 64px;
   background: linear-gradient(90deg, var(--mist), transparent 55%, var(--mist));
   margin-bottom: 8px;
-}
-
-.colophon {
-  margin-top: 22px;
-  color: color-mix(in srgb, var(--ink) 55%, var(--blotter));
-  font-size: 0.78rem;
-  letter-spacing: 0.04em;
 }
 
 .detail-head {
