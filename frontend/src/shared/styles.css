@@ -209,6 +209,12 @@ a {
   background: var(--mist);
 }
 
+.btn.danger {
+  background: transparent;
+  color: var(--wine);
+  border: 1px solid color-mix(in srgb, var(--wine) 35%, var(--rule));
+}
+
 .btn.danger:hover {
   background: color-mix(in srgb, var(--wine) 8%, var(--sheet));
 }
