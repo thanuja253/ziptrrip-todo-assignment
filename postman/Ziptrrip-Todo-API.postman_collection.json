@@ -1,0 +1,104 @@
+{
+  "info": {
+    "name": "Ziptrrip Todo API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "CRUD for the Ziptrrip todo assignment. Set `baseUrl` if the API is not on localhost:3000."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "todoId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Create todo",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (pm.response.code === 201) {",
+              "  const id = pm.response.json().id;",
+              "  if (id) pm.collectionVariables.set('todoId', id);",
+              "}"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Hold the Lisbon apartment deposit\",\n  \"description\": \"Host wants the remainder by Friday.\",\n  \"priority\": \"high\",\n  \"tags\": [\"lisbon\", \"money\"],\n  \"dueAt\": \"2026-09-04T10:00:00.000Z\"\n}"
+        },
+        "url": "{{baseUrl}}/todos"
+      }
+    },
+    {
+      "name": "Get all todos",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/todos"
+      }
+    },
+    {
+      "name": "Get todos (open / high)",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/todos?status=open&priority=high"
+      }
+    },
+    {
+      "name": "Search todos",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/todos?q=lisbon"
+      }
+    },
+    {
+      "name": "Get todo by id",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/todos/{{todoId}}"
+      }
+    },
+    {
+      "name": "Update todo (PATCH)",
+      "request": {
+        "method": "PATCH",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"completed\": true,\n  \"priority\": \"low\"\n}"
+        },
+        "url": "{{baseUrl}}/todos/{{todoId}}"
+      }
+    },
+    {
+      "name": "Update todo (PUT)",
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Lisbon deposit — paid\",\n  \"completed\": true\n}"
+        },
+        "url": "{{baseUrl}}/todos/{{todoId}}"
+      }
+    },
+    {
+      "name": "Delete todo",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/todos/{{todoId}}"
+      }
+    }
+  ]
+}

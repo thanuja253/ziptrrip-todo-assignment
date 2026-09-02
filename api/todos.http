@@ -1,0 +1,43 @@
+@base = http://localhost:3000/api
+@id = 507f1f77bcf86cd799439011
+
+### Create
+POST {{base}}/todos
+Content-Type: application/json
+
+{
+  "title": "Buy the 35x45 passport photos",
+  "description": "Chemist on Rue Cler, ask for the EU set.",
+  "priority": "high",
+  "tags": ["docs"],
+  "dueAt": "2026-09-10T10:00:00.000Z"
+}
+
+### List
+GET {{base}}/todos
+
+### Search + filters
+GET {{base}}/todos?q=passport&status=open&priority=high
+
+### One
+GET {{base}}/todos/{{id}}
+
+### Mark done
+PATCH {{base}}/todos/{{id}}
+Content-Type: application/json
+
+{
+  "completed": true
+}
+
+### Rewrite title (PUT alias)
+PUT {{base}}/todos/{{id}}
+Content-Type: application/json
+
+{
+  "title": "Passport photos — done at Rue Cler",
+  "priority": "low"
+}
+
+### Delete
+DELETE {{base}}/todos/{{id}}
